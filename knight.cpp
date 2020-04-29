@@ -150,7 +150,7 @@ int main(int argc, char** argv)
    int i;
 
 	readFile(filename, theKnight, nEvent, arrEvent);
-	cout << theKnight.HP << ' ' << theKnight.level << ' ' << theKnight.remedy << ' ' << theKnight.maidenkiss << ' ' << theKnight.phoenixdown << endl;
+	//cout << theKnight.HP << ' ' << theKnight.level << ' ' << theKnight.remedy << ' ' << theKnight.maidenkiss << ' ' << theKnight.phoenixdown << endl;
 
 	for (i = 0; i < nEvent; i++)
 	{
