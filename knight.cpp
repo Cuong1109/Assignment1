@@ -30,17 +30,24 @@ const int ABYSS= 19;
 const int GUINEVERSE= 20;
 const int LIGHTWING= 21;
 const int ODIN= 22;
-const int DRAGON_SWORD= 22;
+const int DRAGON_SWORD= 23;
 const int BOWSER=99;
 
 const int ROUND_TABLE_WARRIOR= 0;
 const int ARTHUR= 1;
 const int LANCELOT= 2;
 const int PALADIN= 3;
-const int DRAGON_WARRIOR=4;
+const int DRAGON_WARRIOR_NO_SWORD=4;
+const int DRAGON_WARRIOR_HAVE_SWORD=5;
 
 const int EVENT_SIZE = 100;
 const int MAX_CHARACTER_EACH_LINE = 250;
+
+const int BASE_DAMAGE_MADBEAR=10;
+const int BASE_DAMAGE_BANDIT=15;
+const int BASE_DAMAGE_LORDLUPIN=45;
+const int BASE_DAMAGE_ELF= 65;
+const int BASE_DAMAGE_TROLL=85;
 
 struct knight
 {
@@ -167,14 +174,14 @@ void display(int* nOut)
     cout << "Error!";
 }
 
-void caculateResult(int *nOut, int HP, int level, int remedy, int maidenkiss, int phoenixdown, bool isCompleteMission)
+int caculateResult(int HP, int level, int remedy, int maidenkiss, int phoenixdown, bool isCompleteMission)
 {
 	if (isCompleteMission)
 	{
-		*nOut=HP+level+maidenkiss+phoenixdown;
+		return(HP+level+remedy+maidenkiss+phoenixdown);
 	} else
 	{
-		*nOut=1;
+		return(-1);
 	}
 	
 }
@@ -224,8 +231,99 @@ int typeOfCharacter(int HP)
 	if (isArthur(HP)) return(ARTHUR);
 	if (isLancelot(HP)) return(LANCELOT);
 	if (isPaladin(HP)) return(PALADIN);
-	if (isDragonWarrior(HP)) return(DRAGON_WARRIOR);
+	if (isDragonWarrior(HP)) return(DRAGON_WARRIOR_NO_SWORD);
 	return(ROUND_TABLE_WARRIOR);
+}
+
+void increseNotPass(int &now, int max, int temp)
+{
+	now+=temp;
+	if (now>max) now=max;
+}
+
+bool isPerfectSquare(int x) 
+{ 
+    int s = sqrt(x); 
+    return (s*s == x); 
+} 
+
+bool isFibonacci(int n) 
+{ 
+    return isPerfectSquare(5*n*n + 4) || 
+           isPerfectSquare(5*n*n - 4); 
+} 
+
+int mushFib(int HP, int maxHP)
+{
+	bool kt=0;
+	while (kt==0)
+	{
+		if (isFibonacci(++HP)) kt=1;
+	}
+	if (HP>maxHP) HP=maxHP;
+	return(HP);
+}
+void decreaseNotOver(int &now, int min, int temp)
+{
+	now-=temp;
+	if (now<min) now=min;
+}
+
+int levelO(int i)
+{
+	i++;
+	int b=i%10;
+	int c=i>6?(b>5?b:5):b;
+	return(c);
+}
+
+int damage(int baseDamage, int levelO)
+{
+	return(baseDamage*levelO);
+}
+
+void usePhoenixDown(int &phoenixdown, bool &isTiny, bool &isFrog,int &HP, int maxHP)
+{
+	phoenixdown--;
+	isTiny=false;
+	isFrog=false;
+	HP=maxHP;
+}
+
+void tinyStage(bool &isTiny, int &tinyCount)
+{
+	if (isTiny)
+	{
+		tinyCount--;
+	}
+}
+
+void frogStage(bool &isFrog, int &frogCount)
+{
+	if (isFrog)
+	{
+		frogCount--;
+	}
+}
+
+void odinStage(bool &isOdin, int &odinCount, bool &isOdinActive)
+{
+	if (isOdin)
+	{
+		if (odinCount==0)
+		isOdin=0;
+		odinCount--;	
+	}
+}
+
+void lightwingStage(bool &isLightwing, int &lightwingtCount)
+{
+	if (isLightwing)
+	{
+		if (lightwingtCount==0)
+		isLightwing=0;
+		lightwingtCount--;
+	}
 }
 
 int main(int argc, char** argv)
@@ -239,36 +337,484 @@ int main(int argc, char** argv)
    int* nOut;                           // final result
    int i;
 
-   bool isCompleteMission=1;
-   int typeCharacter=ROUND_TABLE_WARRIOR;
-
 	readFile(filename, theKnight, nEvent, arrEvent);
 	//cout << theKnight.HP << ' ' << theKnight.level << ' ' << theKnight.remedy << ' ' << theKnight.maidenkiss << ' ' << theKnight.phoenixdown << endl;
+	bool isLancelot=0;
+	bool isCompleteMission=1;
+	int characterType=typeOfCharacter(theKnight.HP);
+	if (characterType==LANCELOT) isLancelot=1;
 
-	typeCharacter=typeOfCharacter(theKnight.HP);
+	int backLevel,dem;
+	int HP=theKnight.HP;
+	int level=theKnight.level;
+	int remedy=theKnight.remedy;
+	int maidenkiss=theKnight.maidenkiss;
+	int phoenixdown=theKnight.phoenixdown;
+
+	int frogCount=0;
+	int tinyCount=0;
+	int odinCount=0;
+	int lighwingtCount=0;
+	int nEventNew=nEvent;
+
+	bool isExcalibur=0;
+	bool isExcalipoor=0;
+	bool isMythril=0;
+	bool isOdin=0;
+	bool isOdinActive=0;
+	bool isFrog=0;
+	bool isTiny=0;
+	bool isLightwing=0;
+	
 	for (i = 0; i < nEvent; i++)
 	{
+		if (i==nEventNew) break;
 		int theEvent = arrEvent[i];
-		cout << theEvent << endl;
-		//Add code here
+		//cout << theEvent << endl;
+		if (isLancelot==1 && level%2==1) characterType=ARTHUR;
+		if (isLancelot==1 && level%2==0) characterType=LANCELOT;
+		tinyStage(isTiny, tinyCount);
+		frogStage(isFrog, frogCount);
+		odinStage(isOdin, odinCount, isOdinActive);
+		lightwingStage(isLightwing, lighwingtCount);
+
 		switch (theEvent)
 		{
 		case SURRENDER:
-			caculateResult(nOut, theKnight.HP, theKnight.level, theKnight.remedy, theKnight.maidenkiss, theKnight.phoenixdown, isCompleteMission);
-			display(nOut);
-			return(1);
+			goto FINISH;
 		break;
-		
+
 		case MADBEAR:
-			//deal with MadBear here
+			if (isLightwing) break;
+			if (isExcalibur || isOdin || characterType==ARTHUR || characterType==PALADIN || characterType==DRAGON_WARRIOR_HAVE_SWORD) 
+			{
+				increseNotPass(level,10,1);
+				break;
+			}
+			
+			if (level>levelO(i) && !isExcalipoor)
+			{
+				increseNotPass(level,10,1);
+				break;
+			}
+
+			if (level<levelO(i) || isExcalipoor)
+			{
+				if(isMythril==0) HP=HP-damage(BASE_DAMAGE_MADBEAR, levelO(i));
+				if (HP<=0)
+				{
+					if (phoenixdown<=0)
+					{
+						isCompleteMission=0;
+						goto FINISH;
+					} else
+					usePhoenixDown(phoenixdown, isTiny, isFrog, HP, theKnight.HP);
+				}
+			}
+			if (tinyCount==0 && isTiny)
+			{
+				isTiny=false;
+				HP*=5;
+				if (HP>theKnight.HP) HP=theKnight.HP;
+			}
+			if (frogCount==0 && isFrog)
+			{
+				isFrog=false;
+				level=backLevel;
+			}
 		break;
 
 		case BANDIT:
-			//deal with Bandit here
+			if (isLightwing) break;
+			if (isExcalibur || isOdin || characterType==ARTHUR || characterType==PALADIN || characterType==DRAGON_WARRIOR_HAVE_SWORD)
+			{
+				increseNotPass(level,10,1);
+				break;
+			}
+
+			if (level>levelO(i) && !isExcalipoor)
+			{
+				increseNotPass(level,10,1);
+				break;
+			}
+
+			if (level<levelO(i) || isExcalipoor)
+			{
+				if(isMythril==0) HP=HP-damage(BASE_DAMAGE_BANDIT, levelO(i));
+				if (HP<=0)
+				{
+					if (phoenixdown<=0)
+					{
+						isCompleteMission=0;
+						goto FINISH;
+					} else
+					usePhoenixDown(phoenixdown, isTiny, isFrog, HP, theKnight.HP);
+				}
+			}
+			if (tinyCount==0 && isTiny)
+			{
+				isTiny=false;
+				HP*=5;
+				if (HP>theKnight.HP) HP=theKnight.HP;
+			}
+			if (frogCount==0 && isFrog)
+			{
+				isFrog=false;
+				level=backLevel;
+			}
+		break;
+
+		case LORDLUPIN:
+			if (isLightwing) break;
+			if (isExcalibur || isOdin || characterType==ARTHUR || characterType==PALADIN || characterType==DRAGON_WARRIOR_HAVE_SWORD)
+			{
+				increseNotPass(level,10,1);
+				break;
+			}
+
+			if (level>levelO(i) && !isExcalipoor)
+			{
+				increseNotPass(level,10,1);
+				break;
+			}
+
+				if (level<levelO(i) || isExcalipoor)
+			{
+				if(isMythril==0) HP=HP-damage(BASE_DAMAGE_LORDLUPIN, levelO(i));
+				if (HP<=0)
+				{
+					if (phoenixdown<=0)
+					{
+						isCompleteMission=0;
+						goto FINISH;
+					} else
+					usePhoenixDown(phoenixdown, isTiny, isFrog, HP, theKnight.HP);
+				}
+			}
+			if (tinyCount==0 && isTiny)
+			{
+				isTiny=false;
+				HP*=5;
+				if (HP>theKnight.HP) HP=theKnight.HP;
+			}
+			if (frogCount==0 && isFrog)
+			{
+				isFrog=false;
+				level=backLevel;
+			}
+		break;
+
+		case ELF:
+			if (isLightwing) break;
+			if (isExcalibur || isOdin || characterType==ARTHUR || characterType==PALADIN || characterType==DRAGON_WARRIOR_HAVE_SWORD)
+			{
+				increseNotPass(level,10,1);
+				break;
+			}
+
+			if (level>levelO(i) && !isExcalipoor)
+			{
+				increseNotPass(level,10,1);
+				break;
+			}
+
+			if (level<levelO(i) || isExcalipoor)
+			{
+				if(isMythril==0) HP=HP-damage(BASE_DAMAGE_ELF, levelO(i));
+				if (HP<=0)
+				{
+					if (phoenixdown<=0)
+					{
+						isCompleteMission=0;
+						goto FINISH;
+					} else
+					usePhoenixDown(phoenixdown, isTiny, isFrog, HP, theKnight.HP);
+				}
+			}
+			if (tinyCount==0 && isTiny)
+			{
+				isTiny=false;
+				HP*=5;
+				if (HP>theKnight.HP) HP=theKnight.HP;
+			}
+			if (frogCount==0 && isFrog)
+			{
+				isFrog=false;
+				level=backLevel;
+			}
+		break;
+
+		case TROLL:
+			if (isLightwing) break;
+			if (isExcalibur || isOdin || characterType==ARTHUR || characterType==PALADIN || characterType==DRAGON_WARRIOR_HAVE_SWORD)
+			{
+				increseNotPass(level,10,1);
+				break;
+			}
+
+			if (level>levelO(i) && !isExcalipoor)
+			{
+				increseNotPass(level,10,1);
+				break;
+			}
+
+				if (level<levelO(i) || isExcalipoor)
+			{
+				if(isMythril==0) HP=HP-damage(BASE_DAMAGE_TROLL, levelO(i));
+				if (HP<=0)
+				{
+					if (phoenixdown<=0)
+					{
+						isCompleteMission=0;
+						goto FINISH;
+					} else
+					usePhoenixDown(phoenixdown, isTiny, isFrog, HP, theKnight.HP);
+				}
+			}
+			if (tinyCount==0 && isTiny)
+			{
+				isTiny=false;
+				HP*=5;
+				if (HP>theKnight.HP) HP=theKnight.HP;
+			}
+			if (frogCount==0 && isFrog)
+			{
+				isFrog=false;
+				level=backLevel;
+			}
+		break;
+
+		case SHAMAN:
+			if (isLightwing) break;
+			if (isOdin || characterType==ARTHUR || characterType==PALADIN || characterType==DRAGON_WARRIOR_HAVE_SWORD)
+			{
+				increseNotPass(level,10,2);
+				break;
+			}
+
+			if (isTiny || isFrog) break;
+
+			if (level>levelO(i) && !isExcalipoor)
+			{
+				increseNotPass(level,10,2);
+				break;
+			}
+
+			if (level<levelO(i) || isExcalipoor)
+			{
+				if (HP<5) HP=1;
+				else HP=HP/5;
+				if (remedy>=1) 
+				{
+					remedy--;
+					HP*=5;
+				}
+				else
+				{
+					isTiny=true;
+					tinyCount=3;
+				}
+			}
+		break;
+
+		case VAJSH:
+			if (isLightwing) break;
+			if (isOdin || characterType==ARTHUR || characterType==PALADIN || characterType==DRAGON_WARRIOR_HAVE_SWORD)
+			{
+				increseNotPass(level,10,2);
+				break;
+			}
+
+			if (isTiny || isFrog) break;
+
+			if (level>levelO(i) && !isExcalipoor)
+			{
+				increseNotPass(level,10,2);
+				break;
+			}
+
+			if (level<levelO(i) || isExcalipoor)
+			{
+				backLevel=level;
+				level=1;
+				if (maidenkiss>=1) 
+				{
+					maidenkiss--;
+					level=backLevel;
+				}
+				else
+				{
+					isFrog=true;
+					frogCount=3;
+				}
+			}
+		break;
+
+		case EXCALIBUR:
+			if (isLightwing) break;
+			if (characterType==DRAGON_WARRIOR_HAVE_SWORD) break;
+			isExcalibur=true;
+		break;
+
+		case MYTHRIL:
+			if (isLightwing) break;
+			isMythril=true;
+		break;
+
+		case EXCALIPOOR:
+			if (isLightwing) break;
+			if (characterType==PALADIN) break;
+			if (characterType==DRAGON_WARRIOR_HAVE_SWORD) break;
+			if (characterType==DRAGON_WARRIOR_NO_SWORD) break;
+			if (characterType==ARTHUR) break;
+			if (level<5) isExcalipoor=true;
+			isExcalibur=false;
+		break;
+		
+
+		case MUSHMARIO:
+			if (isLightwing) break;
+			increseNotPass(HP,theKnight.HP,50);
+		break;
+
+		case MUSHFIB:
+			if (isLightwing) break;
+			HP=mushFib(HP, theKnight.HP);
+		break;
+
+		case MUSHGHOST:
+			if (isLightwing) break;
+			if (characterType==PALADIN) break;
+			if (characterType==DRAGON_WARRIOR_HAVE_SWORD) break;
+			decreaseNotOver(HP,1,50);
+		break;
+
+		case MUSHKNIGHT:
+			if (isLightwing) break;
+			increseNotPass(theKnight.HP,999,50);
+			HP=theKnight.HP;
+		break;
+
+		case REMEDY:
+			if (isLightwing) break;
+			increseNotPass(remedy,99,1);
+			if (isTiny)
+			{
+				remedy--;
+				HP=HP*5;
+				isTiny=false;
+			}
+		break;
+
+		case MAIDENKISS:
+			if (isLightwing) break;
+			increseNotPass(maidenkiss,99,1);
+			if (isFrog)
+			{
+				maidenkiss--;
+				level=backLevel;
+				isFrog=false;
+			}
+		break;
+
+		case PHOENIXDOWN:
+			if (isLightwing) break;
+			increseNotPass(phoenixdown,99,1);
+		break;
+
+		case MERLIN:
+			if (isLightwing) break;
+			if (isTiny)
+			{
+				isTiny=false;
+				HP*=5;
+			}
+			if(isFrog)
+			{
+				isFrog=false;
+				level=backLevel;
+			}
+			increseNotPass(level,10,1);
+			HP=theKnight.HP;
+		break;
+
+		case ABYSS:
+			if (isLightwing) break;
+			if (characterType==DRAGON_WARRIOR_HAVE_SWORD) break;
+			if (level<7) 
+			{
+				isCompleteMission=0;
+				goto FINISH;
+			}
+		break;
+
+		case GUINEVERSE:
+			if (isLightwing)
+			{
+				goto FINISH;
+				break;
+			}
+			dem=0;
+			nEventNew=i*2+1;
+			while (dem!=i)
+			{
+				dem++;
+				arrEvent[i+dem]=arrEvent[i-dem];
+			}
+		break;
+
+		case LIGHTWING:
+			if (isLightwing) break;
+			isLightwing=1;
+			lighwingtCount=3;
+		break;
+
+		case ODIN:
+			if (isLightwing) break;
+			if (isOdinActive==0) 
+			{
+				isOdinActive=1;
+				isOdin=1;
+				odinCount=3;
+			}
+		break;
+
+		case DRAGON_SWORD:
+			if (isLightwing) break;
+			if(characterType==DRAGON_WARRIOR_NO_SWORD)
+			characterType=DRAGON_WARRIOR_HAVE_SWORD;
+		break;
+
+		case BOWSER:
+			if (isLightwing) break;
+			if (isOdin)
+			{
+				level=10;
+				break;
+			}
+			if (characterType==ARTHUR || characterType==LANCELOT || characterType==DRAGON_WARRIOR_HAVE_SWORD) 
+			{
+				level=10;
+				break;
+			} 
+			if (characterType==PALADIN && level>=8)
+			{
+				level=10;
+				break;
+			}
+			if(level==10)
+			{
+				break;
+			}
+			isCompleteMission=0;
+			goto FINISH;
 		break;
 		}
 	}
-	caculateResult(nOut, theKnight.HP, theKnight.level, theKnight.remedy, theKnight.maidenkiss, theKnight.phoenixdown, isCompleteMission);
+
+	FINISH: 
+	int result=caculateResult(HP,level,remedy,maidenkiss,phoenixdown,isCompleteMission);
+	nOut=&result;
     display(nOut);
 	return 0;
 }
