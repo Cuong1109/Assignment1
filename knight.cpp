@@ -328,9 +328,9 @@ void lightwingStage(bool &isLightwing, int &lightwingtCount)
 
 int main(int argc, char** argv)
 {
-    //if (argc < 2) return 1;
-    const char* filename = "input.txt";
-
+    if (argc < 2) return 1;
+    const char* filename = argv[1];;
+	
    struct knight theKnight;
    int nEvent; //number of events
    int* arrEvent = new int[EVENT_SIZE]; // array of events
